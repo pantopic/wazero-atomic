@@ -1,2 +1,2 @@
-github.com/pantopic/wazero-pipe/sdk-go v0.0.0-20251227000548-7f6608ad8422 h1:cCBJycSz+5vsyf3/lhiyvoB1CQizN75WBs/1rquNg5M=
-github.com/pantopic/wazero-pipe/sdk-go v0.0.0-20251227000548-7f6608ad8422/go.mod h1:MZ7tJJL942OkPNGtDRwnQk1hP60ZSEmV4+s7fac93sM=
+github.com/pantopic/wazero-atomic/sdk-go v0.0.0-20260227225054-42895944c3b6 h1:R8N9CvY1NB5ya+vozeeJPWvsAqoSoYLRe6+V2lIaZVc=
+github.com/pantopic/wazero-atomic/sdk-go v0.0.0-20260227225054-42895944c3b6/go.mod h1:m6zJiYlVZ/d9v6nPpSNYZfXpaquUhjlVQCa3MvOdKBA=
