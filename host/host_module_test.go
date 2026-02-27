@@ -54,8 +54,8 @@ func TestModule(t *testing.T) {
 				if err != nil {
 					t.Fatalf("%v", err)
 				}
-				if stack[0] != uint64(n) {
-					t.Fatalf("expected %d, got %d", n, stack[0])
+				if stack[0] != uint64(n+1) {
+					t.Fatalf("expected %d, got %d", n+1, stack[0])
 				}
 			}
 		})
@@ -65,7 +65,7 @@ func TestModule(t *testing.T) {
 				t.Fatalf("%v", err)
 			}
 			if stack[0] != uint64(n+1) {
-				t.Fatalf("expected %d, got %d", n, stack[0])
+				t.Fatalf("expected %d, got %d", n+1, stack[0])
 			}
 		})
 		t.Run(`store`, func(t *testing.T) {
@@ -91,8 +91,8 @@ func TestModule(t *testing.T) {
 				if err != nil {
 					t.Fatalf("%v", err)
 				}
-				if stack[0] != uint64(n) {
-					t.Fatalf("expected %d, got %d", n, stack[0])
+				if stack[0] != uint64(n+1) {
+					t.Fatalf("expected %d, got %d", n+1, stack[0])
 				}
 			}
 		})
@@ -102,7 +102,7 @@ func TestModule(t *testing.T) {
 				t.Fatalf("%v", err)
 			}
 			if stack[0] != uint64(n+1) {
-				t.Fatalf("expected %d, got %d", n, stack[0])
+				t.Fatalf("expected %d, got %d", n+1, stack[0])
 			}
 		})
 		t.Run(`store`, func(t *testing.T) {

@@ -58,13 +58,13 @@ func (h *hostModule) Register(ctx context.Context, r wazero.Runtime) (err error)
 		builder = builder.NewFunctionBuilder().WithGoModuleFunction(api.GoModuleFunc(fn), nil, nil).Export(name)
 	}
 	for name, fn := range map[string]any{
-		"__atomic_u64_add": func(u64 *atomic.Uint64, delta uint64) (new uint64) {
+		"__atomic_uint64_add": func(u64 *atomic.Uint64, delta uint64) (new uint64) {
 			return u64.Add(delta)
 		},
-		"__atomic_u64_load": func(u64 *atomic.Uint64) uint64 {
+		"__atomic_uint64_load": func(u64 *atomic.Uint64) uint64 {
 			return u64.Load()
 		},
-		"__atomic_u64_store": func(u64 *atomic.Uint64, val uint64) {
+		"__atomic_uint64_store": func(u64 *atomic.Uint64, val uint64) {
 			u64.Store(val)
 		},
 	} {

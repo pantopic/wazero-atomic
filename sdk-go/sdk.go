@@ -11,17 +11,18 @@ func NewUint64(id uint32) *Uint64 {
 func (x *Uint64) Add(delta uint64) (new uint64) {
 	id = x.id
 	u64 = delta
-	add()
+	uint64_add()
 	return u64
 }
 
 func (x *Uint64) Load() uint64 {
-	load()
+	id = x.id
+	uint64_load()
 	return u64
 }
 
 func (x *Uint64) Store(val uint64) {
 	id = x.id
 	u64 = val
-	store()
+	uint64_store()
 }

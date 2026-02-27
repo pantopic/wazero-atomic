@@ -18,16 +18,16 @@ func __atomic() (res uint32) {
 }
 
 //go:wasm-module pantopic/wazero-atomic
-//export __atomic_add
-func add()
+//export __atomic_uint64_add
+func uint64_add()
 
 //go:wasm-module pantopic/wazero-atomic
-//export __atomic_load
-func load()
+//export __atomic_uint64_load
+func uint64_load()
 
 //go:wasm-module pantopic/wazero-atomic
-//export __atomic_store
-func store()
+//export __atomic_uint64_store
+func uint64_store()
 
 // Fix for lint rule `unusedfunc`
 var _ = __atomic
