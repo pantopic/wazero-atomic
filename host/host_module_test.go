@@ -44,7 +44,7 @@ func TestModule(t *testing.T) {
 		t.Fatalf(`%v`, err)
 	}
 
-	ctx = ContextCopy(ctx, ctx)
+	ctx = hostModule.ContextCopy(ctx, ctx)
 
 	t.Run(`uint64`, func(t *testing.T) {
 		var n int
