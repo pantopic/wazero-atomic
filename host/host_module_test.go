@@ -3,7 +3,9 @@ package wazero_atomic
 import (
 	"context"
 	_ "embed"
+	"fmt"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/tetratelabs/wazero"
@@ -46,80 +48,98 @@ func TestModule(t *testing.T) {
 
 	ctx = hostModule.ContextCopy(ctx, ctx)
 
-	t.Run(`uint64`, func(t *testing.T) {
-		var n int
-		t.Run(`add`, func(t *testing.T) {
-			for n = range 10 {
-				stack, err := mod1.ExportedFunction(`testUint64Add`).Call(ctx, uint64(1))
+	for i := range 2 {
+		set := strconv.Itoa(i + 1)
+		t.Run(fmt.Sprintf("set-%s", set), func(t *testing.T) {
+			t.Run(`uint64`, func(t *testing.T) {
+				var n int
+				t.Run(`add`, func(t *testing.T) {
+					for n = range 10 {
+						stack, err := mod1.ExportedFunction(`testUint64Add`+set+`a`).Call(ctx, uint64(1))
+						if err != nil {
+							t.Fatalf("%v", err)
+						}
+						if stack[0] != uint64(n+1) {
+							t.Fatalf("expected %d, got %d", n+1, stack[0])
+						}
+					}
+				})
+				t.Run(`load`, func(t *testing.T) {
+					stack, err := mod2.ExportedFunction(`testUint64Load` + set + `a`).Call(ctx)
+					if err != nil {
+						t.Fatalf("%v", err)
+					}
+					if stack[0] != uint64(n+1) {
+						t.Fatalf("expected %d, got %d", n+1, stack[0])
+					}
+				})
+				t.Run(`store`, func(t *testing.T) {
+					n = 100
+					stack, err := mod1.ExportedFunction(`testUint64Store`+set+`a`).Call(ctx, uint64(n))
+					if err != nil {
+						t.Fatalf("%v", err)
+					}
+					stack, err = mod2.ExportedFunction(`testUint64Load` + set + `a`).Call(ctx)
+					if err != nil {
+						t.Fatalf("%v", err)
+					}
+					if stack[0] != uint64(n) {
+						t.Fatalf("expected %d, got %d", n, stack[0])
+					}
+				})
+			})
+			t.Run(`alt`, func(t *testing.T) {
+				var n int
+				t.Run(`add`, func(t *testing.T) {
+					for n = range 10 {
+						stack, err := mod1.ExportedFunction(`testUint64Add`+set+`b`).Call(ctx, uint64(1))
+						if err != nil {
+							t.Fatalf("%v", err)
+						}
+						if stack[0] != uint64(n+1) {
+							t.Fatalf("expected %d, got %d", n+1, stack[0])
+						}
+					}
+				})
+				t.Run(`load`, func(t *testing.T) {
+					stack, err := mod2.ExportedFunction(`testUint64Load` + set + `b`).Call(ctx)
+					if err != nil {
+						t.Fatalf("%v", err)
+					}
+					if stack[0] != uint64(n+1) {
+						t.Fatalf("expected %d, got %d", n+1, stack[0])
+					}
+				})
+				t.Run(`store`, func(t *testing.T) {
+					n = 100
+					stack, err := mod1.ExportedFunction(`testUint64Store`+set+`b`).Call(ctx, uint64(n))
+					if err != nil {
+						t.Fatalf("%v", err)
+					}
+					stack, err = mod2.ExportedFunction(`testUint64Load` + set + `b`).Call(ctx)
+					if err != nil {
+						t.Fatalf("%v", err)
+					}
+					if stack[0] != uint64(n) {
+						t.Fatalf("expected %d, got %d", n, stack[0])
+					}
+				})
+			})
+			t.Run(`del`, func(t *testing.T) {
+				stack, err := mod1.ExportedFunction(`testUint64Del` + set + `a`).Call(ctx)
 				if err != nil {
 					t.Fatalf("%v", err)
 				}
-				if stack[0] != uint64(n+1) {
-					t.Fatalf("expected %d, got %d", n+1, stack[0])
-				}
-			}
-		})
-		t.Run(`load`, func(t *testing.T) {
-			stack, err := mod2.ExportedFunction(`testUint64Load`).Call(ctx)
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-			if stack[0] != uint64(n+1) {
-				t.Fatalf("expected %d, got %d", n+1, stack[0])
-			}
-		})
-		t.Run(`store`, func(t *testing.T) {
-			n = 100
-			stack, err := mod1.ExportedFunction(`testUint64Store`).Call(ctx, uint64(n))
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-			stack, err = mod2.ExportedFunction(`testUint64Load`).Call(ctx)
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-			if stack[0] != uint64(n) {
-				t.Fatalf("expected %d, got %d", n, stack[0])
-			}
-		})
-	})
-	t.Run(`alt`, func(t *testing.T) {
-		var n int
-		t.Run(`add`, func(t *testing.T) {
-			for n = range 10 {
-				stack, err := mod1.ExportedFunction(`testUint64Add2`).Call(ctx, uint64(1))
+				stack, err = mod2.ExportedFunction(`testUint64Load` + set + `a`).Call(ctx)
 				if err != nil {
 					t.Fatalf("%v", err)
 				}
-				if stack[0] != uint64(n+1) {
-					t.Fatalf("expected %d, got %d", n+1, stack[0])
+				if stack[0] != uint64(0) {
+					t.Fatalf("expected %d, got %d", 0, stack[0])
 				}
-			}
+			})
 		})
-		t.Run(`load`, func(t *testing.T) {
-			stack, err := mod2.ExportedFunction(`testUint64Load2`).Call(ctx)
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-			if stack[0] != uint64(n+1) {
-				t.Fatalf("expected %d, got %d", n+1, stack[0])
-			}
-		})
-		t.Run(`store`, func(t *testing.T) {
-			n = 100
-			stack, err := mod1.ExportedFunction(`testUint64Store2`).Call(ctx, uint64(n))
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-			stack, err = mod2.ExportedFunction(`testUint64Load2`).Call(ctx)
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-			if stack[0] != uint64(n) {
-				t.Fatalf("expected %d, got %d", n, stack[0])
-			}
-		})
-	})
+	}
 
 	hostModule.Stop()
 }

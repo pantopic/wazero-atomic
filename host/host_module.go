@@ -19,6 +19,7 @@ var (
 )
 
 type meta struct {
+	ptrSet    uint32
 	ptrID     uint32
 	ptrUint64 uint32
 }
@@ -45,7 +46,11 @@ func (h *hostModule) Name() string {
 
 func (h *hostModule) ContextCopy(dst, src context.Context) context.Context {
 	dst = context.WithValue(dst, ctxKeyMeta, get[*meta](src, ctxKeyMeta))
-	dst = context.WithValue(dst, ctxKeyUint64, make(map[uint32]*atomic.Uint64))
+	if v := src.Value(ctxKeyUint64); v != nil {
+		dst = context.WithValue(dst, ctxKeyUint64, v.(map[uint32]map[uint64]*atomic.Uint64))
+	} else {
+		dst = context.WithValue(dst, ctxKeyUint64, make(map[uint32]map[uint64]*atomic.Uint64))
+	}
 	return dst
 }
 
@@ -66,6 +71,9 @@ func (h *hostModule) Register(ctx context.Context, r wazero.Runtime) (err error)
 		},
 		"__atomic_uint64_store": func(u64 *atomic.Uint64, val uint64) {
 			u64.Store(val)
+		},
+		"__atomic_uint64_del": func(m map[uint64]*atomic.Uint64, id uint64) {
+			delete(m, id)
 		},
 	} {
 		switch fn := fn.(type) {
@@ -91,6 +99,13 @@ func (h *hostModule) Register(ctx context.Context, r wazero.Runtime) (err error)
 				u64 := h.getCtxU64(ctx, mod, meta)
 				fn(u64, val)
 			})
+		case func(m map[uint64]*atomic.Uint64, id uint64):
+			register(name, func(ctx context.Context, mod api.Module, stack []uint64) {
+				meta := get[*meta](ctx, ctxKeyMeta)
+				val := readUint64(mod, meta.ptrID)
+				m := h.getCtxU64Set(ctx, mod, meta)
+				fn(m, val)
+			})
 		default:
 			log.Panicf("Method signature implementation missing: %#v", fn)
 		}
@@ -108,6 +123,7 @@ func (h *hostModule) InitContext(ctx context.Context, m api.Module) (context.Con
 	meta := &meta{}
 	ptr := uint32(stack[0])
 	for i, v := range []*uint32{
+		&meta.ptrSet,
 		&meta.ptrID,
 		&meta.ptrUint64,
 	} {
@@ -116,20 +132,38 @@ func (h *hostModule) InitContext(ctx context.Context, m api.Module) (context.Con
 	return context.WithValue(ctx, ctxKeyMeta, meta), nil
 }
 
-func (h *hostModule) getCtxU64(ctx context.Context, mod api.Module, meta *meta) *atomic.Uint64 {
-	id := readUint32(mod, meta.ptrID)
-	m := get[map[uint32]*atomic.Uint64](ctx, ctxKeyUint64)
+func (h *hostModule) getCtxU64Set(ctx context.Context, mod api.Module, meta *meta) map[uint64]*atomic.Uint64 {
+	set := readUint32(mod, meta.ptrSet)
+	m := get[map[uint32]map[uint64]*atomic.Uint64](ctx, ctxKeyUint64)
 	h.RLock()
-	_, ok := m[id]
+	s, ok := m[set]
 	h.RUnlock()
 	if !ok {
 		h.Lock()
-		if _, ok := m[id]; !ok {
-			m[id] = &atomic.Uint64{}
+		if s, ok = m[set]; !ok {
+			s = make(map[uint64]*atomic.Uint64)
+			m[set] = s
 		}
 		h.Unlock()
 	}
-	return m[id]
+	return s
+}
+
+func (h *hostModule) getCtxU64(ctx context.Context, mod api.Module, meta *meta) *atomic.Uint64 {
+	s := h.getCtxU64Set(ctx, mod, meta)
+	id := readUint64(mod, meta.ptrID)
+	h.RLock()
+	u64, ok := s[id]
+	h.RUnlock()
+	if !ok {
+		h.Lock()
+		if _, ok = s[id]; !ok {
+			u64 = &atomic.Uint64{}
+			s[id] = u64
+		}
+		h.Unlock()
+	}
+	return u64
 }
 
 func get[T any](ctx context.Context, key string) T {
@@ -142,6 +176,10 @@ func get[T any](ctx context.Context, key string) T {
 
 func id(m api.Module, meta *meta) uint32 {
 	return readUint32(m, meta.ptrID)
+}
+
+func getSet(m api.Module, meta *meta) uint32 {
+	return readUint32(m, meta.ptrSet)
 }
 
 func readUint32(m api.Module, ptr uint32) (val uint32) {
