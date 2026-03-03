@@ -73,7 +73,9 @@ func (h *hostModule) Register(ctx context.Context, r wazero.Runtime) (err error)
 			u64.Store(val)
 		},
 		"__atomic_uint64_del": func(m map[uint64]*atomic.Uint64, id uint64) {
+			h.Lock()
 			delete(m, id)
+			h.Unlock()
 		},
 	} {
 		switch fn := fn.(type) {
