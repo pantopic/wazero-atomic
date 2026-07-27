@@ -15,7 +15,24 @@ import (
 //go:embed test\.wasm
 var testwasm []byte
 
+//go:embed test-zig\.wasm
+var testwasmZig []byte
+
 func TestModule(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		wasm []byte
+	}{
+		{`go`, testwasm},
+		{`zig`, testwasmZig},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			testModule(t, tc.wasm)
+		})
+	}
+}
+
+func testModule(t *testing.T, wasm []byte) {
 	var (
 		ctx = context.Background()
 	)
@@ -25,7 +42,7 @@ func TestModule(t *testing.T) {
 	hostModule := New()
 	hostModule.Register(ctx, r)
 
-	compiled, err := r.CompileModule(ctx, testwasm)
+	compiled, err := r.CompileModule(ctx, wasm)
 	if err != nil {
 		panic(err)
 	}
