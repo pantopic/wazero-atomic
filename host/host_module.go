@@ -125,8 +125,14 @@ func (h *hostModule) InitContext(ctx context.Context, m api.Module) (context.Con
 }
 
 func (h *hostModule) ContextCopy(dst, src context.Context) context.Context {
-	dst = context.WithValue(dst, ctxKeyMeta, get[*meta](src, ctxKeyMeta))
-	dst = context.WithValue(dst, ctxKeyUint64, make(map[uint32]map[uint64]*atomic.Uint64))
+	if v := src.Value(ctxKeyMeta); v != nil {
+		dst = context.WithValue(dst, ctxKeyMeta, v.(*meta))
+	}
+	if v := src.Value(ctxKeyUint64); v != nil {
+		dst = context.WithValue(dst, ctxKeyUint64, v.(map[uint32]map[uint64]*atomic.Uint64))
+	} else {
+		dst = context.WithValue(dst, ctxKeyUint64, make(map[uint32]map[uint64]*atomic.Uint64))
+	}
 	return dst
 }
 
